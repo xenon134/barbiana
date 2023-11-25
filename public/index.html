@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Movie Night!!</title>
+
+        <link rel="icon" href="favicon.png" type="image/png">
+        <link rel="stylesheet" type="text/css" href="style.css">
+
+        <script src="script.js" defer></script>
+    </head>
+    <body>
+        <div id="fileselector">
+            <table>
+                <tr>
+                    <th>
+                        <h1>Upload File</h1>
+                        <input type="file" accept="video/*" id="fileInpElem">
+                    </th>
+                    <th>or</th>
+                    <th>
+                        <h1>YouTube link</h1>
+                        <input type="text" id="ytInpElem" style="width: 310px;">
+                </tr>
+                <tr height="20px"></tr>
+                <tr>
+                    <th>
+                        <p><input type="button" value="Submit" onclick="getfile();"></p>
+                    </th>
+                    <th width="200px"></th>
+                    <th>
+                        <input type="button" value="Submit" onclick="getlink();">
+                    </th>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

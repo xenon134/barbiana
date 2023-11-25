@@ -1,0 +1,31 @@
+/* center body: */
+html, body {
+    height: 100%;
+}
+html {
+    display: table;
+    margin: auto;
+}
+body {
+    display: table-cell;
+    vertical-align: middle;
+}
+/* Taken from https://stackoverflow.com/a/14776179/17870055 */
+
+body {
+    background: #121212;
+    color: white;
+}
+
+video:focus {
+    /* Remove the outline that appears when selected: */
+    outline: none;
+}
+
+::cue {
+    /* Subs */
+    color: yellow;
+    opacity: 1;
+    text-shadow: #000 3px 4px 3px;
+    background: #00000000;
+}
