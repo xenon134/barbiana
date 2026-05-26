@@ -1,6 +1,6 @@
-from pyngrok import ngrok
-tunnel = ngrok.connect("51510", "tcp")
-print('\n' + 'Server started @ ' + tunnel.public_url.replace('tcp://', 'http://') + '\n')
+# from pyngrok import ngrok
+# tunnel = ngrok.connect("51510", "tcp", pyngrok_config=ngrok.PyngrokConfig(ngrok_path='C:\\tooks\\ngrok.exe'))
+# print('\n' + 'Server started @ ' + tunnel.public_url.replace('tcp://', 'http://') + '\n')
 
 
 

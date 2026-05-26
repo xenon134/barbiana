@@ -24,27 +24,59 @@ def fileFromPath(path, requestPath):
 
 activeConnections = list()
 
+async def ping_loop(ws):
+    try:
+        while not ws.closed:
+            # await asyncio.sleep(2)
+            # await ws.send_str('PING')
+            print('PING TEST')
+    except asyncio.CancelledError:
+        pass
 
 async def ws(request):
     print('Recieved Websocket request.')
+    print('Active connections:', len(activeConnections))
     ws = web.WebSocketResponse()  # heartbeat=10)
     await ws.prepare(request)
 
-    activeConnections.append(ws)
+    import json
+    import time
+    
+    wsdata = {'ws': ws, 'lastRecievedAt': time.time()}
+    activeConnections.append(wsdata)
+    # ping_task = asyncio.create_task(ping_loop(ws))
 
-    # await ws.receive_str()
-    await ws.send_str('\n'.join((
-        '/subs.vtt',  # path of subtitle file
-        'video/mp4',  # video file mime type
-        '1108346465',  # video file length, or a URL to the video file
-    )))
+    await ws.send_str(json.dumps({
+        'subs': '/subs.vtt',  # path of subtitle file
+        'type': 'video/mp4',  # video file mime type
+        'len': 1108346465,  # video file length
+    }))
 
-    async for msg in ws:  # process messages as they come
-        for i in activeConnections:
-            if i is not ws:
-                await i.send_str(msg.data)
-        print(msg.data)
+    try:
+        async for msg in ws:  # process messages as they come
+            wsdata['lastRecievedAt'] = time.time()
+            data = json.loads(msg.data)
 
-    activeConnections.remove(ws)
-    print('removed')
+            if data['op'] == 'PING':
+                continue
+            if data['op'] == 'IPREPORT':
+                wsdata['public_ip'] = data['ip']
+                print(wsdata['ws'], 'identified as', wsdata['public_ip'])
+                continue
+
+            for i in activeConnections:
+                if i['ws'] is not ws:
+                    await i['ws'].send_str(data)
+            print(data)
+            
+    finally:
+        ping_task.cancel()
+        try:
+            await ping_task
+        except asyncio.CancelledError:
+            pass
+
+    activeConnections.remove(wsdata)
+    print('========= removed ==========')
+    print('Active connections:', len(activeConnections))
     return ws
