@@ -11,18 +11,16 @@ self.addEventListener('fetch', event => {
 
     // Intercept requests targeting the virtual P2P file
     if (url.pathname === '/virtual-p2p-video.mp4') {
-        event.respondWith(handleP2PRequest(event.request));
+        event.respondWith(handleP2PRequest(event.request, event.clientId));
     }
 });
 
-async function handleP2PRequest(request) {
-    const clients = await self.clients.matchAll({ type: 'window' });
-    if (!clients || clients.length === 0) {
-        return new Response("No active clients found to route WebRTC data.", { status: 500 });
+async function handleP2PRequest(request, clientId) {
+    const client = await self.clients.get(clientId);
+    if (!client) {
+        return new Response("Active client not found to route WebRTC data.", { status: 500 });
     }
 
-    // Route the request to the first active client window controlling the WebRTC connection
-    const client = clients[0];
     const rangeHeader = request.headers.get('Range') || 'bytes=0-';
 
     return new Promise((resolve) => {

@@ -48,9 +48,7 @@ async def ws(request):
     # ping_task = asyncio.create_task(ping_loop(ws))
 
     await ws.send_str(json.dumps({
-        'subs': server_parameters['subtitles_path'],  # path of subtitle file
         'type': 'video/mp4',  # video file mime type
-        'len': 1,  # video file length. legacy of a different time
     }))
 
     try:
@@ -67,7 +65,7 @@ async def ws(request):
 
             for i in activeConnections:
                 if i['ws'] is not ws:
-                    await i['ws'].send_str(data)
+                    await i['ws'].send_str(msg.data)
             print(data)
             
     finally:

@@ -102,15 +102,10 @@ async def on_shutdown(app):
 
 
 if __name__ == "__main__":
-    video_path = input('Video file path: ')
+    video_path = input('Video file path: ') or 'public\\video.mp4'
     assert video_path.endswith('.mp4'), "Video file must be in .mp4 format"
-    subtitles_path = input('Subtitles file path: ')
+    subtitles_path = input('Subtitles file path: ') or 'public\\subs.vtt'
     assert subtitles_path.endswith('.vtt'), "Subtitles file must be in .vtt format"
-
-    parameters = {
-        'video_path': video_path,
-        'subtitles_path': subtitles_path,}
-    views.server_parameters = parameters
 
     app = web.Application()
     app['pcs'] = set()  # Track active peer connections for cleanup on shutdown
@@ -126,6 +121,7 @@ if __name__ == "__main__":
     app.router.add_get('/shutdown', shutdown)
 
     app.router.add_get('/ws', views.ws)
+    app.router.add_get('/subs.vtt', lambda request: web.FileResponse(subtitles_path))
     app.router.add_get('/{p:.*}', views.file)
 
     app.on_shutdown.append(on_shutdown)

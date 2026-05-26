@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Movie Night!!</title>
-    <style>
-        body { font-family: system-ui, sans-serif; text-align: center; background-color: #f4f4f9; padding: 40px; }
-        /* .container { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); } */
-        /* video { background: #000; width: 100%; border-radius: 8px; margin-top: 20px; } */
-        button { padding: 12px 24px; font-size: 16px; font-weight: bold; color: white; background-color: #007bff; border: none; border-radius: 6px; cursor: pointer; }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #status { margin-top: 15px; font-weight: bold; color: #fff; }
-    </style>
-    
-
         <link rel="icon" href="favicon.png" type="image/png">
         <link rel="stylesheet" type="text/css" href="style.css">
 
         <script src="script.js" defer></script>
 </head>
 <body>
-        <!-- <h1>WebRTC Service Worker Stream</h1> -->
-        <button id="startButton">Start Connection</button>
-        <div id="status">Waiting to register Service Worker...</div>
-        <video id="videoElement" controls autoplay></video>
+    <button id="startButton">Start Connection</button><p></p>
+    <video id="videoElement" controls autoplay hidden></video>
+    
+    <div class="overlay" id="status">
+        <p>Waiting to register Service Worker...</p>
+    </div>
 
     <script>
+        function logmsg(s) {
+            console.log(s);
+            const elem = document.getElementsByClassName("overlay")[0];
+            if (elem.classList.contains('statusmsg'))
+                window.logmsgs += ('\n' + s);
+            else
+                elem.innerText += ('\n' + s);
+        }
+
         const startButton = document.getElementById('startButton');
         const videoElement = document.getElementById('videoElement');
-        const statusElement = document.getElementById('status');
 
         let dataChannel;
         const pendingRequests = new Map();
@@ -35,9 +35,9 @@
         // 1. Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(() => {
-                statusElement.textContent = "Service worker registered. Ready to connect.";
+                logmsg("Service worker registered. Ready to connect.");
             }).catch(err => {
-                statusElement.textContent = "Service worker registration failed.";
+                logmsg("Service worker registration failed.");
                 console.error(err);
             });
         }
@@ -61,8 +61,11 @@
 
         startButton.addEventListener('click', () => {
             startButton.disabled = true;
-            statusElement.textContent = "Initiating WebRTC connection...";
+            logmsg("Initiating WebRTC connection...");
             startConnection();
+            // initializeSync(); // Attach video event listeners after starting the connection
+            startButton.hidden = true;
+            videoElement.hidden = false;
         });
 
         async function startConnection() {
@@ -101,8 +104,8 @@
             };
 
             dataChannel.onopen = () => {
-                statusElement.textContent = "Data channel open. Loading video...";
-                statusElement.style.color = "green";
+                logmsg("Data channel open. Loading video...");
+                // statusElement.style.color = "green";
                 // Trigger the Service Worker interception by setting the virtual source
                 videoElement.src = '/virtual-p2p-video.mp4';
                 videoElement.play().catch(e => console.log("Autoplay prevented:", e));
@@ -131,10 +134,5 @@
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
         }
     </script>
-
-    
-    <!-- <div class="overlay">
-        <p>This is floating above everything.</p>
-    </div> -->
 </body>
 </html>

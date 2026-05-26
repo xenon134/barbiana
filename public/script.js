@@ -1,17 +1,8 @@
 var videoElem, subsElem;
 
-var fileLength, mimeType, subsURL;
+var mimeType;
 
 var ignorePlayEvent = false, ignorePauseEvent = false, ignoreSeekEvent = false, ignoreRatechangeEvent = false;
-
-/* function logmsg(s) {
-    console.log(s);
-    const elem = document.getElementsByClassName("overlay")[0];
-    if (elem.classList.contains('statusmsg'))
-        window.logmsgs += ('\n' + s);
-    else
-        elem.innerText += ('\n' + s);
-} */
 
 function alertmsg(s) {
     const elem = document.getElementsByClassName("overlay")[0];
@@ -40,15 +31,13 @@ websocket.addEventListener("message", ({ data }) => {
         fmnry = false; // this is the first msg
 
         data = JSON.parse(data);
-        subsURL = data['subs'];
         mimeType = data['type'];
-        fileLength = data['len'];
         console.log('Got here.')
 
-        fetch(new Request("https://api.ipify.org?format=json")).then((response) => response.json())
+        /* fetch(new Request("https://api.ipify.org?format=json")).then((response) => response.json())
             .then((resp) => {
                 websocket.send(JSON.stringify({'op': 'IPREPORT', 'ip': resp['ip']}));
-            }).catch(console.error);
+            }).catch(console.error); */
 
         var intervalID = window.setInterval(function() {
             // if ((Date.now() - lastRecievedAt) > 4000) {  // last message was over 6 seconds ago
@@ -80,10 +69,11 @@ websocket.addEventListener("message", ({ data }) => {
                 //
             break;
             case "SEEK":
-                if (Mat.abs(data['time'] - videoElem.currentTime) > 2) {
+                if (Math.abs(data['time'] - videoElem.currentTime) > 2) {
                     ignoreSeekEvent = true;
                     videoElem.currentTime = data['time'];
                 }
+                break;
             default:
                 logmsg('Unknown op: ' + msg);
         }
@@ -97,52 +87,32 @@ websocket.addEventListener("close", function (event) {
 });
 
 
-function getfile() {
-    let file = document.getElementById("fileInpElem").files[0];
-    if (!file) {
-        alert("No file selected.");
-        return;
-    } else if (file.size != fileLength) {
-        // alert("Are you sure this is the right file?");
-    }
-    initialize(URL.createObjectURL(file));
-}
-
-function initialize(vidsrc) {
-    initializeDOM(vidsrc);
-    initializeSync();
-    addEventListener('keydown', keyHandler, true);
-}
-
-function initializeDOM(vidsrc) {
+function initializeSync(vidsrc) {
     videoElem = document.getElementById("videoElement");
-    // videoElem.setAttribute("autoplay", true);
-    // videoElem.setAttribute("controls", true);
-    // videoElem.setAttribute("preload", "auto");
     window.setInterval(() => { videoElem.setAttribute("width", Math.round(0.8*window.innerWidth)); }, 100);
     videoElem.setAttribute("height", 480); // height depends on aspect ratio
     // videoElem.autoPictureInPicture = true;
     
-    // subsElem = document.createElement("track");
-    // subsElem.setAttribute("label", "English");
-    // subsElem.setAttribute("kind", "subtitles");
-    // subsElem.setAttribute("srclang", "en");
-    // subsElem.setAttribute("src", subsURL);
-    // subsElem.setAttribute("default", true);
-    // videoElem.appendChild(subsElem);
+    subsElem = document.createElement("track");
+    subsElem.setAttribute("label", "English");
+    subsElem.setAttribute("kind", "subtitles");
+    subsElem.setAttribute("srclang", "en");
+    subsElem.setAttribute("src", '/subs.vtt');
+    subsElem.setAttribute("default", true);
+    videoElem.appendChild(subsElem);
 
-    // videoElem.textTracks[0].mode = "showing";
+    videoElem.textTracks[0].mode = "showing";
 
-    // document.body.appendChild(videoElem);
-    // document.getElementById("fileselector").setAttribute("hidden", true);
-
-    // window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
-
+    window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
     // videoElem.requestFullscreen();
+
+    attachListeners();
+    addEventListener('keydown', keyHandler, true);
 }
 
-function initializeSync() {
+function attachListeners() {
     videoElem.addEventListener("seeked", (event) => {
+        console.log('seeked event');
         if (ignoreSeekEvent) {
             ignoreSeekEvent = false;
         } else {
