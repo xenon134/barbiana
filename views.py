@@ -48,7 +48,7 @@ async def ws(request):
     # ping_task = asyncio.create_task(ping_loop(ws))
 
     await ws.send_str(json.dumps({
-        'type': 'video/mp4',  # video file mime type
+        'type': server_parameters['mime_type'],  # server_parameters will be set by server.py after importing
     }))
 
     try:

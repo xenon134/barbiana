@@ -63,7 +63,7 @@
             startButton.disabled = true;
             logmsg("Initiating WebRTC connection...");
             startConnection();
-            // initializeSync(); // Attach video event listeners after starting the connection
+            initializeSync(); // Attach video event listeners after starting the connection
             startButton.hidden = true;
             videoElement.hidden = false;
         });
@@ -93,6 +93,7 @@
                                 start: currentMetadata.start,
                                 end: currentMetadata.end,
                                 totalSize: currentMetadata.totalSize,
+                                mimeType: window.mimeType,
                                 chunk: event.data
                             }, [event.data]); // Transfer the ArrayBuffer to avoid copying memory
                             

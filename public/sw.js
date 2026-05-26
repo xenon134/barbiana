@@ -32,7 +32,7 @@ async function handleP2PRequest(request, clientId) {
 
             // Construct standard HTTP headers for partial video content
             const headers = new Headers({
-                'Content-Type': 'video/mp4',
+                'Content-Type': data.mimeType,
                 'Content-Length': (data.end - data.start + 1).toString(),
                 'Content-Range': `bytes ${data.start}-${data.end}/${data.totalSize}`,
                 'Accept-Ranges': 'bytes'

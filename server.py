@@ -48,8 +48,6 @@ async def offer(request):
         req_id = req.get("id")
         range_header = req.get("range", "bytes=0-")
         
-        # video_path = os.path.join(ROOT, "video.mp4")  # this is now taken from user input at server startup
-
         file_size = os.path.getsize(video_path)
         start = 0
         end = file_size - 1
@@ -101,12 +99,7 @@ async def on_shutdown(app):
     app['pcs'].clear()
 
 
-if __name__ == "__main__":
-    video_path = input('Video file path: ') or 'public\\video.mp4'
-    assert video_path.endswith('.mp4'), "Video file must be in .mp4 format"
-    subtitles_path = input('Subtitles file path: ') or 'public\\subs.vtt'
-    assert subtitles_path.endswith('.vtt'), "Subtitles file must be in .vtt format"
-
+def main(video_path, subtitles_path):
     app = web.Application()
     app['pcs'] = set()  # Track active peer connections for cleanup on shutdown
 
@@ -128,3 +121,24 @@ if __name__ == "__main__":
 
     print("Starting WebRTC Server on http://localhost:51510")
     web.run_app(app, access_log=None, host="0.0.0.0", port=51510)
+
+
+if __name__ == "__main__":
+    video_path = input('Video file path: ')
+
+    subtitles_path = input('Subtitles file path: ')
+    
+    if not subtitles_path:  # extract from video
+        from convert_utils import extract_subtitles
+        subtitles_path = extract_subtitles(video_path)
+
+    if not subtitles_path.endswith('.vtt'):
+        from convert_utils import convert_to_vtt
+        subtitles_path = convert_to_vtt(subtitles_path)
+    
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type('video.mp4')
+    parameters = {'mime_type': mime_type}
+    views.server_parameters = parameters
+    
+    main(video_path, subtitles_path)

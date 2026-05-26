@@ -32,7 +32,6 @@ websocket.addEventListener("message", ({ data }) => {
 
         data = JSON.parse(data);
         mimeType = data['type'];
-        console.log('Got here.')
 
         /* fetch(new Request("https://api.ipify.org?format=json")).then((response) => response.json())
             .then((resp) => {
@@ -103,7 +102,7 @@ function initializeSync(vidsrc) {
 
     videoElem.textTracks[0].mode = "showing";
 
-    window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
+    // window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
     // videoElem.requestFullscreen();
 
     attachListeners();
