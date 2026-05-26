@@ -5,6 +5,12 @@ def convert_to_vtt(subs_file):
     sp.Popen(['ffmpeg.exe', '-hide_banner', '-i', subs_file, '-y', outfile], stdin=sp.DEVNULL).wait()
     return outfile
 
+def convert_to_vtt_bytes(subs_file):
+    import subprocess as sp
+    proc = sp.Popen(['ffmpeg.exe', '-hide_banner', '-i', subs_file, '-y', '-'], stdin=sp.DEVNULL, stdout=sp.PIPE)
+    return proc.stdout.read()
+
+
 def extract_subtitles(video_file):
     import subprocess as sp
     import os
@@ -20,6 +26,23 @@ def extract_subtitles(video_file):
         return try_finding_subtitles(video_file)
     else:
         return outfile
+
+
+def extract_subtitles_bytes(video_file):
+    import subprocess as sp
+    import sys
+    proc = sp.Popen(['ffmpeg.exe', '-hide_banner', '-i', video_file, '-map', '0:s:0', '-y', '-'],
+        stdin=sp.DEVNULL, stderr=sp.PIPE, stdout=sp.PIPE)
+    proc.wait()
+    output = proc.stderr.read()
+    sys.stdout.buffer.write(output + b'\n')  # print ffmpeg output to console for debugging
+    if b' matches no streams.' in output:
+        print('No subtitle stream found in the video file.')
+        # return try_finding_subtitles(video_file)
+        with open(try_finding_subtitles(video_file), 'rb') as f:
+            return f.read()
+    else:
+        return proc.stdout.read()
 
 def try_finding_subtitles(video_file):
     # try finding other subtitle files in the same directory

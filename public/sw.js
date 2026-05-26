@@ -1,3 +1,11 @@
+async function logmsg(msg) {
+    console.log(msg);
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => client.postMessage({ type: 'log', message: msg }));
+}
+
+logmsg('Service Worker running.');
+
 self.addEventListener('install', event => {
     self.skipWaiting(); // Activate immediately
 });
@@ -16,6 +24,8 @@ self.addEventListener('fetch', event => {
 });
 
 async function handleP2PRequest(request, clientId) {
+    let t0 = new Date();
+    // logmsg('Received request for ' + request.url);
     const client = await self.clients.get(clientId);
     if (!client) {
         return new Response("Active client not found to route WebRTC data.", { status: 500 });
@@ -44,6 +54,10 @@ async function handleP2PRequest(request, clientId) {
             });
 
             resolve(response);
+
+            // Calculate time taken
+            const timeTaken = (new Date().getTime() - t0.getTime()) / 1000;
+            logmsg('Bytes = ' + (data.end - data.start + 1) + ', Time = ' + timeTaken);
         };
 
         // Send the network request details to the main window

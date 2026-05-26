@@ -129,12 +129,15 @@ if __name__ == "__main__":
     subtitles_path = input('Subtitles file path: ')
     
     if not subtitles_path:  # extract from video
-        from convert_utils import extract_subtitles
-        subtitles_path = extract_subtitles(video_path)
+        import convert_utils
+        subtitles_path = convert_utils.extract_subtitles(video_path)
+        # subtitles_bytes = convert_utils.extract_subtitles_bytes(video_path)
 
     if not subtitles_path.endswith('.vtt'):
-        from convert_utils import convert_to_vtt
-        subtitles_path = convert_to_vtt(subtitles_path)
+        import convert_utils
+        subtitles_path = convert_utils.convert_to_vtt(subtitles_path)
+        # subtitles_bytes = convert_utils.convert_to_vtt_bytes(subtitles_path)
+
     
     import mimetypes
     mime_type, _ = mimetypes.guess_type('video.mp4')
