@@ -1,40 +1,140 @@
-<html>
-    <head>
-        <title>Movie Night!!</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Night!!</title>
+    <style>
+        body { font-family: system-ui, sans-serif; text-align: center; background-color: #f4f4f9; padding: 40px; }
+        /* .container { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); } */
+        /* video { background: #000; width: 100%; border-radius: 8px; margin-top: 20px; } */
+        button { padding: 12px 24px; font-size: 16px; font-weight: bold; color: white; background-color: #007bff; border: none; border-radius: 6px; cursor: pointer; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status { margin-top: 15px; font-weight: bold; color: #fff; }
+    </style>
+    
 
         <link rel="icon" href="favicon.png" type="image/png">
         <link rel="stylesheet" type="text/css" href="style.css">
 
         <script src="script.js" defer></script>
-    </head>
-    <body>
-        <div id="fileselector">
-            <table>
-                <tr>
-                    <th>
-                        <h1>Upload File</h1>
-                        <input type="file" accept="video/*" id="fileInpElem">
-                    </th>
-                    <th>or</th>
-                    <th>
-                        <h1>YouTube link</h1>
-                        <input type="text" id="ytInpElem" style="width: 310px;">
-                </tr>
-                <tr height="20px"></tr>
-                <tr>
-                    <th>
-                        <p><input type="button" value="Submit" onclick="getfile();"></p>
-                    </th>
-                    <th width="200px"></th>
-                    <th>
-                        <input type="button" value="Submit" onclick="getlink();">
-                    </th>
-                </tr>
-            </table>
-        </div>
+</head>
+<body>
+        <!-- <h1>WebRTC Service Worker Stream</h1> -->
+        <button id="startButton">Start Connection</button>
+        <div id="status">Waiting to register Service Worker...</div>
+        <video id="videoElement" controls autoplay></video>
 
-        <div class="overlay">
-            <p>This is floating above everything.</p>
-        </div>
-    </body>
+    <script>
+        const startButton = document.getElementById('startButton');
+        const videoElement = document.getElementById('videoElement');
+        const statusElement = document.getElementById('status');
+
+        let dataChannel;
+        const pendingRequests = new Map();
+
+        // 1. Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                statusElement.textContent = "Service worker registered. Ready to connect.";
+            }).catch(err => {
+                statusElement.textContent = "Service worker registration failed.";
+                console.error(err);
+            });
+        }
+
+        // 2. Handle incoming requests from the Service Worker
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data.type === 'request-data' && dataChannel && dataChannel.readyState === 'open') {
+                const port = event.ports[0];
+                const reqId = Math.random().toString(36).substring(2, 15);
+                
+                // Store the MessagePort to reply to the Service Worker later
+                pendingRequests.set(reqId, port);
+
+                // Request the byte range over the P2P connection
+                dataChannel.send(JSON.stringify({
+                    id: reqId,
+                    range: event.data.range
+                }));
+            }
+        });
+
+        startButton.addEventListener('click', () => {
+            startButton.disabled = true;
+            statusElement.textContent = "Initiating WebRTC connection...";
+            startConnection();
+        });
+
+        async function startConnection() {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+
+            // Create the Data Channel before creating the offer
+            dataChannel = pc.createDataChannel('media');
+            dataChannel.binaryType = 'arraybuffer'; // Crucial for receiving raw bytes
+            
+            let currentMetadata = null;
+
+            dataChannel.onmessage = (event) => {
+                if (typeof event.data === 'string') {
+                    // Receive metadata header first
+                    currentMetadata = JSON.parse(event.data);
+                } else if (event.data instanceof ArrayBuffer) {
+                    // Receive binary chunk immediately after metadata
+                    if (currentMetadata) {
+                        const port = pendingRequests.get(currentMetadata.id);
+                        if (port) {
+                            // Forward the binary data to the Service Worker
+                            port.postMessage({
+                                start: currentMetadata.start,
+                                end: currentMetadata.end,
+                                totalSize: currentMetadata.totalSize,
+                                chunk: event.data
+                            }, [event.data]); // Transfer the ArrayBuffer to avoid copying memory
+                            
+                            pendingRequests.delete(currentMetadata.id);
+                        }
+                        currentMetadata = null;
+                    }
+                }
+            };
+
+            dataChannel.onopen = () => {
+                statusElement.textContent = "Data channel open. Loading video...";
+                statusElement.style.color = "green";
+                // Trigger the Service Worker interception by setting the virtual source
+                videoElement.src = '/virtual-p2p-video.mp4';
+                videoElement.play().catch(e => console.log("Autoplay prevented:", e));
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            await new Promise((resolve) => {
+                if (pc.iceGatheringState === 'complete') resolve();
+                else pc.onicegatheringstatechange = () => {
+                    if (pc.iceGatheringState === 'complete') resolve();
+                };
+            });
+
+            const response = await fetch('/offer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sdp: pc.localDescription.sdp,
+                    type: pc.localDescription.type
+                })
+            });
+
+            const answer = await response.json();
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+    </script>
+
+    
+    <!-- <div class="overlay">
+        <p>This is floating above everything.</p>
+    </div> -->
+</body>
 </html>

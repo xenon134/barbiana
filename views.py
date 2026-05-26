@@ -1,4 +1,5 @@
 from aiohttp import web
+import asyncio
 
 from pathlib import Path
 website_root = Path('public').absolute()
@@ -47,9 +48,9 @@ async def ws(request):
     # ping_task = asyncio.create_task(ping_loop(ws))
 
     await ws.send_str(json.dumps({
-        'subs': '/subs.vtt',  # path of subtitle file
+        'subs': server_parameters['subtitles_path'],  # path of subtitle file
         'type': 'video/mp4',  # video file mime type
-        'len': 1108346465,  # video file length
+        'len': 1,  # video file length. legacy of a different time
     }))
 
     try:
@@ -70,11 +71,12 @@ async def ws(request):
             print(data)
             
     finally:
-        ping_task.cancel()
-        try:
-            await ping_task
-        except asyncio.CancelledError:
-            pass
+        pass
+        # ping_task.cancel()
+        # try:
+        #     await ping_task
+        # except asyncio.CancelledError:
+        #     pass
 
     activeConnections.remove(wsdata)
     print('========= removed ==========')

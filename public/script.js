@@ -1,17 +1,17 @@
-var videoElem, srcElem, subsElem;
+var videoElem, subsElem;
 
 var fileLength, mimeType, subsURL;
 
 var ignorePlayEvent = false, ignorePauseEvent = false, ignoreSeekEvent = false, ignoreRatechangeEvent = false;
 
-function logmsg(s) {
+/* function logmsg(s) {
     console.log(s);
     const elem = document.getElementsByClassName("overlay")[0];
     if (elem.classList.contains('statusmsg'))
         window.logmsgs += ('\n' + s);
     else
         elem.innerText += ('\n' + s);
-}
+} */
 
 function alertmsg(s) {
     const elem = document.getElementsByClassName("overlay")[0];
@@ -115,33 +115,28 @@ function initialize(vidsrc) {
 }
 
 function initializeDOM(vidsrc) {
-    videoElem = document.createElement("video");
-    videoElem.setAttribute("autoplay", true);
-    videoElem.setAttribute("controls", true);
-    videoElem.setAttribute("preload", "auto");
+    videoElem = document.getElementById("videoElement");
+    // videoElem.setAttribute("autoplay", true);
+    // videoElem.setAttribute("controls", true);
+    // videoElem.setAttribute("preload", "auto");
     window.setInterval(() => { videoElem.setAttribute("width", Math.round(0.8*window.innerWidth)); }, 100);
-    // videoElem.setAttribute("height", 480); // height depends on aspect ratio
-    videoElem.autoPictureInPicture = true;
+    videoElem.setAttribute("height", 480); // height depends on aspect ratio
+    // videoElem.autoPictureInPicture = true;
+    
+    // subsElem = document.createElement("track");
+    // subsElem.setAttribute("label", "English");
+    // subsElem.setAttribute("kind", "subtitles");
+    // subsElem.setAttribute("srclang", "en");
+    // subsElem.setAttribute("src", subsURL);
+    // subsElem.setAttribute("default", true);
+    // videoElem.appendChild(subsElem);
 
-    srcElem = document.createElement("source");
-    srcElem.setAttribute("src", vidsrc);
-    srcElem.setAttribute("type", mimeType);
-    videoElem.appendChild(srcElem);
+    // videoElem.textTracks[0].mode = "showing";
 
-    subsElem = document.createElement("track");
-    subsElem.setAttribute("label", "English");
-    subsElem.setAttribute("kind", "subtitles");
-    subsElem.setAttribute("srclang", "en");
-    subsElem.setAttribute("src", subsURL);
-    subsElem.setAttribute("default", true);
-    videoElem.appendChild(subsElem);
+    // document.body.appendChild(videoElem);
+    // document.getElementById("fileselector").setAttribute("hidden", true);
 
-    videoElem.textTracks[0].mode = "showing";
-
-    document.body.appendChild(videoElem);
-    document.getElementById("fileselector").setAttribute("hidden", true);
-
-    window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
+    // window.volumeControlClassObject = new VolumeControlClass(videoElem);  // make global
 
     // videoElem.requestFullscreen();
 }
